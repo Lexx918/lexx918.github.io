@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>calc my shtaket plz</title>
+    <style>
+        body {
+            background-color: #0f500f;
+        }
+
+        div {
+            border: 1px solid black
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div style="float: left">
+        <canvas id="cvs" width="800" height="600"></canvas>
+    </div>
+    <div style="float: left">
+        столбики:<br/>
+        <label>ширина: <input type="text" value="100" id="wStolb"/></label><br/>
+        <label>высота: <input type="text" value="1600" id="hStolb"/></label><br/>
+        <br/>
+
+        перекладины:<br/>
+        <label>ширина: <input type="text" value="1500" id="wPerek"/></label><br/>
+        <label>высота: <input type="text" value="60" id="hPerek"/></label><br/>
+        <label>до нижней: <input type="text" value="250" id="hPerekNiz"/></label><br/>
+        <label>до верхней: <input type="text" value="1300" id="hPerekVerh"/></label><br/>
+        <br/>
+
+        штакетины:<br/>
+        <label>штук: <input type="text" value="23" id="n"/></label><br/>
+        <label>ширина: <input type="text" value="45" id="wSh"/></label><br/>
+        <label>торчит снизу: <input type="text" value="40" id="hShNiz"/></label><br/>
+        <label>торчит сверху: <input type="text" value="40" id="hShVerh"/></label><br/>
+        <br/>
+
+        <input type="button" value=" go " id="go">
+        <br/>
+
+        <label>отладка<br/><textarea id="log" rows="10" cols="50"></textarea></label>
+    </div>
+    <div style="float: left">
+        <label>серединки от столбика<br/><textarea id="centers" rows="25" cols="15"></textarea></label>
+    </div>
+</div>
+<script>
+    (function () {
+        let el = document.getElementById("cvs"),
+            ctx = el.getContext('2d');
+
+        let boxPx = {"w": el.width, "h": el.height},
+            boxMm = {"w": -1, "h": -1};
+
+        // in, out : {"x": uint, "y": uint}
+        let toPx = function (mm) {
+            return {"x": mm.x * boxPx.w / boxMm.w, "y": mm.y * boxPx.h / boxMm.h};
+        };
+
+        let updBoxMm = function () {
+            let wStolb = document.getElementById("wStolb").value * 1,
+                hStolb = document.getElementById("hStolb").value * 1,
+                wPerek = document.getElementById("wPerek").value * 1;
+            boxMm = {"w": wStolb * 2 + wPerek, "h": hStolb};
+            document.getElementById("log").innerHTML += `boxMm: [ ${boxMm.w},${boxMm.h} ]\n`;
+        };
+
+        let clear = function () {
+            ctx.fillStyle = '#0f500f';
+            ctx.fillRect(0, 0, boxPx.w, boxPx.h);
+
+            document.getElementById("log").innerHTML = ``;
+            document.getElementById("centers").innerHTML = ``;
+        };
+
+        let calc = function () {
+            updBoxMm();
+            clear();
+
+            let wStolb = document.getElementById("wStolb").value * 1,
+                hStolb = document.getElementById("hStolb").value * 1,
+                wPerek = document.getElementById("wPerek").value * 1,
+                hPerek = document.getElementById("hPerek").value * 1,
+                hPerekNiz = document.getElementById("hPerekNiz").value * 1,
+                hPerekVerh = document.getElementById("hPerekVerh").value * 1,
+                n = document.getElementById("n").value * 1,
+                wSh = document.getElementById("wSh").value * 1,
+                hShNiz = document.getElementById("hShNiz").value * 1,
+                hShVerh = document.getElementById("hShVerh").value * 1;
+
+            ctx.strokeStyle = '#d6f5d6';
+
+            // левый столб
+            {
+                let from = toPx({"x": 0, "y": 0}),
+                    to = toPx({"x": wStolb, "y": hStolb});
+                document.getElementById("log").innerHTML += `left stolb: [ ${from.x},${from.y} - ${to.x},${to.y} ]\n`;
+                ctx.strokeRect(from.x, from.y, to.x - from.x, to.y - from.y);
+            }
+
+            // правый столб
+            {
+                let from = toPx({"x": wStolb + wPerek, "y": 0}),
+                    to = toPx({"x": 2 * wStolb + wPerek, "y": hStolb});
+                document.getElementById("log").innerHTML += `right stolb: [ ${from.x},${from.y} - ${to.x},${to.y} ]\n`;
+                ctx.strokeRect(from.x, from.y, to.x - from.x, to.y - from.y);
+            }
+
+            // верхняя перекладина
+            {
+                let from = toPx({"x": wStolb, "y": hStolb - hPerekVerh - hPerek / 2}),
+                    to = toPx({"x": wStolb + wPerek, "y": hStolb - hPerekVerh + hPerek / 2});
+                document.getElementById("log").innerHTML += `verh perek: [ ${from.x},${from.y} - ${to.x},${to.y} ]\n`;
+                ctx.strokeRect(from.x, from.y, to.x - from.x, to.y - from.y);
+            }
+
+            // нижняя перекладина
+            {
+                let from = toPx({"x": wStolb, "y": hStolb - hPerekNiz - hPerek / 2}),
+                    to = toPx({"x": wStolb + wPerek, "y": hStolb - hPerekNiz + hPerek / 2});
+                document.getElementById("log").innerHTML += `niz perek: [ ${from.x},${from.y} - ${to.x},${to.y} ]\n`;
+                ctx.strokeRect(from.x, from.y, to.x - from.x, to.y - from.y);
+            }
+
+            let wHole = (wPerek - (n * wSh)) / (n + 1);
+
+            // f(x) = ax^2 + bx + c
+            // c = hShVerh
+            // x = wPerek / 2
+            // f(x) = hStolb - hPerekVerh - hPerek/2
+            // =>
+            // hStolb - hPerekVerh - hPerek/2 = a * (wPerek / 2)^2 + hShVerh
+            // a * (wPerek / 2)^2 = hStolb - hPerekVerh - hPerek/2 - hShVerh
+            // a = ( hStolb - hPerekVerh - hPerek/2 - hShVerh ) / ( (wPerek / 2)^2 )
+            let a = (hStolb - hPerekVerh - hPerek / 2 - hShVerh) / ((wPerek / 2) * (wPerek / 2));
+            document.getElementById("log").innerHTML += `f(x) = ` + Math.round(a * 10000) / 10000 + `*x^2 + ${hShVerh}\n`;
+
+            for (let i = 0; i < n; i++) {
+                let centerShX = wStolb + (i + 1) * wHole + i * wSh + wSh / 2;
+                let xParam = Math.abs(boxMm.w / 2 - centerShX);
+                let yParam = a * xParam * xParam + hShVerh;
+
+                document.getElementById("centers").innerHTML += `#${(i+1)}\t${Math.round(centerShX - wStolb)}\n`;
+
+                let from = toPx({
+                        "x": centerShX - wSh / 2,
+                        "y": hStolb - hPerekVerh - hPerek / 2 - yParam
+                    }),
+                    to = toPx({
+                        "x": centerShX + wSh / 2,
+                        "y": hStolb - hPerekNiz + hPerek / 2 + hShNiz
+                    });
+                document.getElementById("log").innerHTML += `shtaket #${i}: [ ${from.x},${from.y} - ${to.x},${to.y} ]\n`;
+                ctx.strokeRect(from.x, from.y, to.x - from.x, to.y - from.y);
+            }
+        };
+
+        calc();
+
+        document.getElementById("go").onclick = calc
+    })();
+</script>
+</body>
+</html>
