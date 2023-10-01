@@ -46,6 +46,9 @@
     <div style="float: left">
         <label>серединки от столбика<br/><textarea id="centers" rows="25" cols="15"></textarea></label>
     </div>
+    <div style="float: left">
+        <label>высоты штакетин<br/><textarea id="heights" rows="25" cols="15"></textarea></label>
+    </div>
 </div>
 <script>
     (function () {
@@ -144,6 +147,7 @@
                 let yParam = a * xParam * xParam + hShVerh;
 
                 document.getElementById("centers").innerHTML += `#${(i+1)}\t${Math.round(centerShX - wStolb)}\n`;
+                document.getElementById("heights").innerHTML += `#${(i+1)}\t${Math.round(hShNiz + (hPerekVerh - hPerekNiz) + hPerek + yParam)}\n`;
 
                 let from = toPx({
                         "x": centerShX - wSh / 2,
