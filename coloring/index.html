@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Coloring</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="Coloring.js"></script>
+</head>
+<body>
+Loading.. <span id="progress"></span>%<br>
+<canvas id="picture" width="800" height="500"></canvas><br>
+<canvas id="palette" width="640" height="256"></canvas>
+
+<script>
+var picture = document.getElementById("picture"),
+    picture2d = picture.getContext("2d"),
+    palette = document.getElementById("palette"),
+    palette2d = palette.getContext("2d"),
+    color = "0,0,0",
+    progress = document.getElementById("progress");
+
+/**
+ *  http://www.quirksmode.org/js/events_properties.html
+ *  http://www.quirksmode.org/js/findpos.html
+ */
+var getClickPos = function(e, elem){
+    var posx = 0,
+        posy = 0;
+    if (!e) {
+        var e = window.event;
+    }
+    if (e.pageX || e.pageY) {
+        posx = e.pageX;
+        posy = e.pageY;
+    } else if (e.clientX || e.clientY) {
+        posx = e.clientX + document.body.scrollLeft;
+        posy = e.clientY + document.body.scrollTop;
+    }
+
+    var findPosX = function(obj){
+        var curleft = 0;
+        if (obj.offsetParent) {
+            while (obj.offsetParent) {
+                curleft += obj.offsetLeft
+                obj = obj.offsetParent;
+            }
+        } else if (obj.x) {
+            curleft += obj.x;
+        }
+        return curleft;
+    }
+
+    var findPosY = function(obj){
+        var curtop = 0;
+        if (obj.offsetParent) {
+            while (obj.offsetParent) {
+                curtop += obj.offsetTop
+                obj = obj.offsetParent;
+            }
+        } else if (obj.y) {
+            curtop += obj.y;
+        }
+        return curtop;
+    }
+
+    return {x: posx - findPosX(elem), y: posy - findPosY(elem)};
+};
+
+var pic = new Image();
+pic.src = "cow.png";
+pic.onload = function(){
+    picture2d.drawImage(pic, 0, 0);
+    var clr = new Coloring(picture2d, 800, 500, function(p){
+        progress.innerHTML = Math.round(p);
+    });
+    picture.addEventListener("click", function(event){
+        var pos = getClickPos(event, picture);
+        clr.fill(pos.x, pos.y, color);
+    });
+}
+
+var hsv = new Image();
+hsv.src = "hsv.jpg";
+hsv.onload = function(){
+    palette2d.drawImage(hsv, 0, 0);
+    palette.addEventListener("click", function(event){
+        var pos = getClickPos(event, palette);
+        var imageData = palette2d.getImageData(pos.x, pos.y, 1, 1).data;
+        color = ""+imageData[0]+","+imageData[1]+","+imageData[2];
+    });
+}
+</script>
+</body>
+</html>
